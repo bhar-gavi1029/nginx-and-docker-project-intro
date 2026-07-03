@@ -1,3 +1,5 @@
+#nginx.conf for host machine when not using docker (if using docker then use nginx.conf file from nginx wala folder)
+
 worker_processes 1;
 
 events {
@@ -36,7 +38,7 @@ http {
 
 
 
-#simple conf
+#simpler conf
 #worker_processes 1;
 
 #events{
