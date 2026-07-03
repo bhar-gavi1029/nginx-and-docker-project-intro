@@ -1,0 +1,65 @@
+worker_processes 1;
+
+events {
+    worker_connections 20;
+}
+
+http {
+    include mime.types;
+
+    upstream nodejs_cluster {
+        least_conn;
+        server 127.0.0.1:3001 max_fails=3 fail_timeout=10s;
+        server 127.0.0.1:3002 max_fails=3 fail_timeout=10s;
+        server 127.0.0.1:3003 max_fails=3 fail_timeout=10s;
+    }
+
+    server {
+        listen 8080;
+        server_name localhost;
+
+        location / {
+            proxy_pass http://nodejs_cluster;
+            proxy_set_header HOST $host;
+            proxy_set_header X-Real-IP $remote_addr;
+
+            # Timeouts to prevent 504 Gateway Timeout
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+
+            # Automatically retry next server if current returns error/timeout
+            proxy_next_upstream error timeout http_502 http_503 http_504;
+        }
+    }
+}
+
+
+
+#simple conf
+#worker_processes 1;
+
+#events{
+#    worker_connections 20;
+#}
+
+#http{
+#    include mime.types;
+
+#    upstream nodejs_cluster{
+#        least_conn;
+#        server 127.0.0.1:3001;
+#        server 127.0.0.1:3002;
+#        server 127.0.0.1:3003;
+#    }
+#    server{
+#        listen 8080;
+#        server_name localhost;
+#        location /{
+#            proxy_pass http://nodejs_cluster;
+#            proxy_set_header HOST $host;
+#            proxy_set_header X-Real-IP $remote_addr;
+#        }
+#    }
+    
+#}

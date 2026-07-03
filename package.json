@@ -1,0 +1,19 @@
+{
+  "name": "nginx-wala",
+  "version": "1.0.0",
+  "description": "pehli baar ",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "expresss": "^0.0.0",
+    "path": "^0.12.7"
+  }
+}
