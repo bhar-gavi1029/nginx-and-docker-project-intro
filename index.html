@@ -3,9 +3,390 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Load-Balanced Node.js Cluster</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            backdrop-filter: blur(16px);
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 24px;
+            margin-bottom: 30px;
+        }
+
+        .title-area h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-area p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 8px 16px;
+            border-radius: 99px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 600;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+
+        .active-server-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 8px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .history-panel {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .history-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 4px;
+        }
+
+        .history-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .history-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-list::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 3px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container-tag {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .tag-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .tag-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+        .tag-pink { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+        .tag-yellow { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .tag-teal { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.3); }
+    </style>
 </head>
 <body>
-    <h1>hello world</h1>
+    <div class="container">
+        <div class="header">
+            <div class="title-area">
+                <h1>Express Cluster Dashboard</h1>
+                <p>Nginx Load Balancer (Least Connections / Sticky Sessions)</p>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>Cluster Active</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="stat-card">
+                <div class="stat-label">Active Node Replica</div>
+                <div id="active-server" class="active-server-badge">Connecting...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Response Time</div>
+                <div id="response-time" class="stat-value">0ms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Container Uptime</div>
+                <div id="uptime" class="stat-value">0s</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Memory Allocation</div>
+                <div id="memory" class="stat-value">0 MB</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <button id="refresh-btn" class="btn">Send Request</button>
+            <div style="text-align: right;">
+                <div class="stat-label" style="margin-bottom: 4px;">Total Requests</div>
+                <div id="request-count" class="stat-value" style="font-size: 24px; font-weight: 800; color: #818cf8;">0</div>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <div class="history-title">
+                <span>Recent Request Log</span>
+                <span id="load-algo" style="font-size: 12px; color: var(--primary);">Detecting...</span>
+            </div>
+            <ul id="history-list" class="history-list">
+                <!-- Log entries will be inserted here dynamically -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const activeServerEl = document.getElementById('active-server');
+        const responseTimeEl = document.getElementById('response-time');
+        const uptimeEl = document.getElementById('uptime');
+        const memoryEl = document.getElementById('memory');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const requestCountEl = document.getElementById('request-count');
+        const historyListEl = document.getElementById('history-list');
+        const loadAlgoEl = document.getElementById('load-algo');
+
+        let requestCount = 0;
+        const colorCache = {};
+        const tagColors = ['tag-blue', 'tag-purple', 'tag-pink', 'tag-yellow', 'tag-teal'];
+
+        function getContainerTagColor(name) {
+            if (!colorCache[name]) {
+                const index = Object.keys(colorCache).length % tagColors.length;
+                colorCache[name] = tagColors[index];
+            }
+            return colorCache[name];
+        }
+
+        async function fetchStatus(isManual = false) {
+            const startTime = performance.now();
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                const duration = Math.round(performance.now() - startTime);
+
+                // Update UI elements
+                activeServerEl.textContent = data.serverName;
+                responseTimeEl.textContent = `${duration}ms`;
+                uptimeEl.textContent = `${Math.round(data.uptime)}s`;
+                
+                const mbUsed = Math.round(data.memoryUsage.heapUsed / 1024 / 1024);
+                memoryEl.textContent = `${mbUsed} MB`;
+
+                requestCount++;
+                requestCountEl.textContent = requestCount;
+
+                // Add log item
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                
+                const timeStr = new Date(data.timestamp).toLocaleTimeString();
+                const tagClass = getContainerTagColor(data.serverName);
+
+                li.innerHTML = `
+                    <span>[${timeStr}] GET /api/status - OK</span>
+                    <span class="container-tag ${tagClass}">${data.serverName}</span>
+                `;
+
+                historyListEl.insertBefore(li, historyListEl.firstChild);
+
+                // Cap the history list size
+                if (historyListEl.children.length > 5) {
+                    historyListEl.removeChild(historyListEl.lastChild);
+                }
+
+                // Detect load balancing pattern
+                detectLoadBalancingPattern();
+
+            } catch (error) {
+                console.error('Failed to fetch status:', error);
+                activeServerEl.textContent = 'Offline';
+                activeServerEl.style.background = '#ef4444';
+            }
+        }
+
+        function detectLoadBalancingPattern() {
+            const tags = Array.from(historyListEl.querySelectorAll('.container-tag')).map(el => el.textContent);
+            if (tags.length < 3) return;
+
+            const uniqueContainers = new Set(tags);
+            if (uniqueContainers.size === 1) {
+                loadAlgoEl.textContent = "Sticky Session (ip_hash)";
+                loadAlgoEl.style.color = "#10b981";
+            } else {
+                loadAlgoEl.textContent = "Load Balancing Active (Round Robin / Least Conn)";
+                loadAlgoEl.style.color = "#6366f1";
+            }
+        }
+
+        // Event listener for manual request
+        refreshBtn.addEventListener('click', () => fetchStatus(true));
+
+        // Initial fetch
+        fetchStatus();
+
+        // Auto-refresh every 2 seconds to simulate continuous system metrics
+        setInterval(() => fetchStatus(false), 2000);
+    </script>
 </body>
 </html>
