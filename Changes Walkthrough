@@ -1,0 +1,73 @@
+.
+
+🛠️ Changes Implemented
+1. Unified App Service & Dynamic Scaling
+Files Modified: 
+compose.yaml
+ and 
+server.js
+.
+Details: Replaced hardcoded app1, app2, and app3 with a single dynamic app template. Express now dynamically reads os.hostname() to uniquely identify replicas when running multiple instances.
+2. Container Healthchecks
+Files Modified: 
+server.js
+ and 
+compose.yaml
+.
+Details: Added a /health endpoint to Express. Docker Compose uses Alpine wget to poll /health every 5 seconds. Nginx waits for service_healthy before starting.
+3. HTTPS Encryption & Security Headers
+Files Modified: 
+nginx.conf
+.
+Details: Configured Nginx to listen on port 443 (mapped to host port 8443) and redirect port 80 (HTTP) to 443 (HTTPS). Configured HSTS, CSP, and XSS security headers.
+SSL Certs: Generated self-signed SSL certs inside the ./certs folder.
+4. Static Asset Caching, Gzip, & Premium Dashboard Redesign
+Files Modified: 
+index.html
+ and 
+nginx.conf
+.
+Details:
+Redesigned index.html into a stunning dark-mode glassmorphism dashboard that queries /api/status in real-time to monitor load-balancing.
+Enabled Nginx static asset caching and gzip compression level 5.
+5. Sticky Sessions (Session Persistence)
+Files Modified: 
+nginx.conf
+.
+Details: Added upstream comments and configurations for ip_hash (sticky sessions) alongside least_conn.
+🚀 How to Run and Verify the Upgrades
+Since Docker Desktop is currently installing/updating on your system, please perform the following verification steps once it has finished launching:
+
+Step 1: Start the Cluster with 3 Replicas
+Run this command in the workspace directory to build and boot the cluster:
+
+powershell
+
+docker compose up -d --build --scale app=3
+Step 2: Access the Dashboard
+Open your browser and navigate to:
+
+
+http://localhost:8080
+It will automatically redirect you to the secure dashboard on https://localhost:8443 (accept the browser's local self-signed certificate warning to proceed).
+
+Step 3: Verify Load Balancing (Round Robin / Least Conn)
+On the dashboard, click "Send Request" multiple times.
+Observe the Active Node Replica badge change colors and show different container IDs.
+Check the Recent Request Log to see requests distributed across different replicas.
+Step 4: Scale the Cluster Dynamically
+Scale up to 5 replicas dynamically without restarting Nginx:
+
+powershell
+
+docker compose up -d --scale app=5
+Step 5: Test Sticky Sessions (Session Persistence)
+Open 
+nginx.conf
+.
+Comment out least_conn; (line 22) and uncomment # ip_hash; (line 23).
+Reload Nginx dynamically:
+powershell
+
+docker compose exec nginx nginx -s reload
+Click "Send Request" in the browser. You will notice the serving container ID remains static (sticky) for your session.
