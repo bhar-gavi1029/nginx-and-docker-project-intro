@@ -28,11 +28,11 @@ graph TD
 
 ## 📁 Project Structure
 
-* [compose.yaml](file:///c:/Users/apkpo/nginx%20wala/compose.yaml) - Defines and spins up the multi-container environment.
-* [nginx.conf](file:///c:/Users/apkpo/nginx%20wala/nginx.conf) - Custom Nginx configuration specifying routing rules, timeouts, and upstream failovers.
-* [Dockerfile](file:///c:/Users/apkpo/nginx%20wala/Dockerfile) - Production-ready Docker build instructions for the Node.js Express server.
-* [server.js](file:///c:/Users/apkpo/nginx%20wala/server.js) - Simple Express app endpoint that serves a file and logs which container served it.
-* [index.html](file:///c:/Users/apkpo/nginx%20wala/index.html) - Static HTML file served by the Node.js instances.
+* [compose.yaml] - Defines and spins up the multi-container environment.
+* [nginx.conf] - Custom Nginx configuration specifying routing rules, timeouts, and upstream failovers.
+* [Dockerfile] - Production-ready Docker build instructions for the Node.js Express server.
+* [server.js] - Simple Express app endpoint that serves a file and logs which container served it.
+* [index.html] - Static HTML file served by the Node.js instances.
 
 ---
 
@@ -44,9 +44,7 @@ Make sure you have [Docker Desktop](https://www.docker.com/products/docker-deskt
 ### Running the Project
 
 1. Navigate to the project directory:
-   ```powershell
-   cd "C:\Users\apkpo\nginx wala"
-   ```
+
 2. Build and launch all services in detached mode:
    ```powershell
    docker compose up -d --build
