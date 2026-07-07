@@ -44,9 +44,7 @@ Make sure you have [Docker Desktop](https://www.docker.com/products/docker-deskt
 ### Running the Project
 
 1. Navigate to the project directory:
-   ```powershell
-   cd "C:\Users\apkpo\nginx wala"
-   ```
+
 2. Build and launch all services in detached mode:
    ```powershell
    docker compose up -d --build
